@@ -1,0 +1,1035 @@
+:root {
+  --bg-1: #06070f;
+  --bg-2: #11152a;
+  --text-main: #f7f8ff;
+  --text-soft: #b8bfdc;
+  --neon-cyan: #44f0ff;
+  --neon-pink: #ff5fae;
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(68, 240, 255, 0.12), transparent 35%),
+    radial-gradient(circle at 80% 20%, rgba(255, 95, 174, 0.12), transparent 38%),
+    linear-gradient(140deg, var(--bg-1), var(--bg-2));
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#confettiCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 150;
+}
+
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.celebration-overlay.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.celebration-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(71, 119, 255, 0.2), transparent 45%),
+    radial-gradient(circle at 80% 25%, rgba(255, 94, 174, 0.18), transparent 45%),
+    linear-gradient(180deg, rgba(2, 4, 10, 0.8), rgba(2, 4, 10, 0.96));
+}
+
+.celebration-stars {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.celebration-stars i {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  animation: starTwinkle var(--twinkle, 3.2s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+#fireworksCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.birthday-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(94vw, 1200px);
+  text-align: center;
+  transform: translate(-50%, -50%) scale(0.35);
+  opacity: 0;
+}
+
+.birthday-banner.show {
+  animation: bannerZoom 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.birthday-banner h2 {
+  margin: 0;
+  font-size: clamp(2rem, 9vw, 6rem);
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  color: #fff7dc;
+  text-shadow:
+    0 0 18px rgba(255, 206, 71, 0.8),
+    0 0 40px rgba(255, 90, 156, 0.75),
+    0 0 74px rgba(64, 156, 255, 0.8);
+}
+
+.text-sparkles {
+  position: relative;
+  width: 100%;
+  height: clamp(80px, 12vw, 140px);
+  margin-top: 0.45rem;
+}
+
+.text-sparkles span {
+  position: absolute;
+  width: 8px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
+  animation: sparkleDrift 1s ease-out forwards;
+}
+
+.intro-screen {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.intro-bg {
+  position: absolute;
+  inset: -5%;
+  background-image: url("astha ki photo.png");
+  background-size: cover;
+  background-position: center;
+  filter: blur(2px);
+  animation: breatheZoom 14s ease-in-out infinite alternate, drift 18s ease-in-out infinite;
+}
+
+.intro-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(3, 4, 8, 0.6), rgba(3, 4, 8, 0.86));
+}
+
+.intro-content {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  max-width: 920px;
+  width: min(92%, 920px);
+  padding: 2rem;
+}
+
+.intro-photo {
+  width: clamp(130px, 24vw, 190px);
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 22px rgba(68, 240, 255, 0.28), 0 0 30px rgba(255, 95, 174, 0.2);
+  margin-bottom: 0.9rem;
+}
+
+.intro-content h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 3.3rem);
+  font-weight: 700;
+  text-shadow: 0 0 30px rgba(68, 240, 255, 0.35);
+}
+
+.intro-hint {
+  margin: 0.9rem 0 0.85rem;
+  color: var(--text-soft);
+  font-size: 0.98rem;
+}
+
+#startVoiceBtn {
+  margin-bottom: 0.8rem;
+}
+
+.typed-text {
+  margin: 1.3rem auto 0;
+  color: #e4ecff;
+  line-height: 1.8;
+  font-size: clamp(0.98rem, 2.2vw, 1.2rem);
+  min-height: 180px;
+  white-space: pre-line;
+  max-width: 760px;
+}
+
+.typing-cursor {
+  margin-top: -0.9rem;
+  color: var(--neon-cyan);
+  animation: blink 1s step-start infinite;
+  font-size: 1.2rem;
+}
+
+.intro-screen.intro-playing .intro-content {
+  animation: introFadeIn 0.65s ease;
+}
+
+#enterMainBtn {
+  position: absolute;
+  z-index: 4;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 120;
+  background: linear-gradient(to bottom, rgba(5, 7, 15, 0.9), rgba(5, 7, 15, 0.2));
+  backdrop-filter: blur(6px);
+}
+
+.top-nav nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.85rem;
+}
+
+.top-nav a {
+  color: var(--text-soft);
+  text-decoration: none;
+  border: 1px solid transparent;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  transition: all 0.25s ease;
+  font-size: 0.9rem;
+}
+
+.top-nav a:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 14px rgba(68, 240, 255, 0.25);
+}
+
+.panel {
+  min-height: 100vh;
+  padding: 6.5rem 1rem 3rem;
+  display: grid;
+  place-items: center;
+}
+
+.content,
+.section-head,
+.quiz-wrap,
+.message-box,
+.final-section > div {
+  width: min(100%, 1100px);
+}
+
+.landing .content {
+  text-align: center;
+}
+
+.landing h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5.2vw, 4rem);
+  text-shadow: 0 0 34px rgba(68, 240, 255, 0.3);
+}
+
+.landing p {
+  color: var(--text-soft);
+  margin: 1rem 0 1.8rem;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+}
+
+.neon-btn {
+  border: 1px solid rgba(68, 240, 255, 0.7);
+  color: #ffffff;
+  background: linear-gradient(120deg, rgba(68, 240, 255, 0.16), rgba(255, 95, 174, 0.16));
+  padding: 0.82rem 1.45rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(68, 240, 255, 0.35), 0 0 24px rgba(255, 95, 174, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.neon-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 24px rgba(68, 240, 255, 0.58), 0 0 34px rgba(255, 95, 174, 0.4);
+}
+
+.section-head {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.section-head h3,
+.message-box h3,
+.quiz-wrap h3 {
+  margin-top: 0;
+  font-size: clamp(1.5rem, 3.4vw, 2.3rem);
+}
+
+.section-head p {
+  color: var(--text-soft);
+}
+
+.memory-section {
+  align-content: center;
+  gap: 1rem;
+}
+
+.gallery {
+  width: min(100%, 1100px);
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.gallery img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  filter: saturate(1.08);
+  transition: transform 0.35s ease, filter 0.35s ease;
+}
+
+.gallery img:hover {
+  transform: translateY(-4px) scale(1.02);
+  filter: saturate(1.18) brightness(1.05);
+}
+
+.memory-cards {
+  margin-top: 1.3rem;
+  width: min(100%, 1100px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.memory-card,
+.message-box,
+.quiz-wrap {
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+}
+
+.memory-card {
+  padding: 1rem;
+  color: #ecf0ff;
+  line-height: 1.6;
+}
+
+.message-box {
+  max-width: 860px;
+  padding: 2rem 1.4rem;
+  text-align: center;
+}
+
+.message-box p {
+  color: #e6ecff;
+  line-height: 1.9;
+  margin-bottom: 0;
+}
+
+.quiz-wrap {
+  max-width: 850px;
+  padding: 1.5rem;
+}
+
+.quiz-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.quiz-form fieldset {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+
+.quiz-form legend {
+  font-weight: 600;
+  padding: 0 0.4rem;
+}
+
+.quiz-form label {
+  display: block;
+  color: #d5ddfd;
+  margin: 0.44rem 0;
+}
+
+.quiz-result {
+  min-height: 1.6rem;
+  margin-top: 0.8rem;
+  color: #f7fcff;
+  font-weight: 500;
+}
+
+.final-section {
+  text-align: center;
+}
+
+.final-text {
+  margin-top: 1.2rem;
+  line-height: 1.8;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+}
+
+.cake {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+}
+
+.plate {
+  position: absolute;
+  width: 240px;
+  height: 18px;
+  background: #84e7ff;
+  left: -10px;
+  bottom: 22px;
+  border-radius: 999px;
+  box-shadow: 0 0 22px rgba(132, 231, 255, 0.45);
+}
+
+.layer {
+  position: absolute;
+  border-radius: 8px;
+  left: 20px;
+  right: 20px;
+}
+
+.layer-bottom {
+  bottom: 40px;
+  height: 60px;
+  background: #f59bc5;
+}
+
+.layer-middle {
+  bottom: 92px;
+  height: 46px;
+  left: 35px;
+  right: 35px;
+  background: #ffc3de;
+}
+
+.layer-top {
+  bottom: 130px;
+  height: 36px;
+  left: 52px;
+  right: 52px;
+  background: #ffe0ef;
+}
+
+.icing {
+  position: absolute;
+  bottom: 152px;
+  left: 52px;
+  right: 52px;
+  height: 12px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.drip {
+  position: absolute;
+  width: 16px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.drip1 {
+  height: 24px;
+  left: 82px;
+  bottom: 136px;
+}
+
+.drip2 {
+  height: 20px;
+  left: 114px;
+  bottom: 140px;
+}
+
+.drip3 {
+  height: 28px;
+  left: 144px;
+  bottom: 132px;
+}
+
+.candle {
+  position: absolute;
+  width: 14px;
+  height: 44px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(45deg, #fff, #fff 5px, #ffe06a 5px, #ffe06a 10px);
+  left: 103px;
+  bottom: 162px;
+}
+
+.flame {
+  position: absolute;
+  width: 18px;
+  height: 28px;
+  background: radial-gradient(circle at 50% 20%, #fff8cf 15%, #ffc64f 40%, #ff8f2f 75%);
+  border-radius: 50% 50% 45% 45%;
+  left: -2px;
+  bottom: 38px;
+  transform-origin: 50% 100%;
+  animation: flicker 1.3s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(255, 198, 79, 0.6));
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes breatheZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes drift {
+  0% {
+    background-position: 48% 50%;
+  }
+  50% {
+    background-position: 54% 50%;
+  }
+  100% {
+    background-position: 46% 50%;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes introFadeIn {
+  from {
+    opacity: 0.65;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(0.95) rotate(3deg);
+  }
+  50% {
+    transform: scale(1.08) rotate(-2deg);
+  }
+  75% {
+    transform: scale(0.98) rotate(2deg);
+  }
+}
+
+@keyframes bannerZoom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -42%) scale(0.25);
+  }
+  56% {
+    opacity: 1;
+    transform: translate(-50%, -51%) scale(1.08);
+  }
+  72% {
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes sparkleDrift {
+  0% {
+    opacity: 0;
+    transform: translate(0, 4px) scale(0.3);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(0, -5px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sparkle-x, 0px), var(--sparkle-y, -28px)) scale(0.2);
+  }
+}
+
+@keyframes starTwinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+@media (max-width: 900px) {
+  .gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .memory-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .typed-text {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding-top: 5.5rem;
+  }
+
+  .top-nav nav {
+    gap: 0.35rem;
+    padding: 0.65rem 0.5rem;
+  }
+
+  .top-nav a {
+    font-size: 0.8rem;
+    padding: 0.33rem 0.62rem;
+  }
+
+  .intro-hint {
+    font-size: 0.9rem;
+  }
+
+  .birthday-banner h2 {
+    letter-spacing: 0.04em;
+  }
+
+  .text-sparkles span {
+    width: 6px;
+  }
+
+  .intro-content {
+    padding: 1.2rem 0.8rem;
+  }
+
+  .intro-photo {
+    width: clamp(100px, 22vw, 150px);
+    margin-bottom: 0.6rem;
+  }
+
+  .intro-content h1 {
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
+  }
+
+  .typed-text {
+    font-size: clamp(0.88rem, 2.4vw, 1.05rem);
+    min-height: 200px;
+  }
+
+  .neon-btn {
+    padding: 0.75rem 1.2rem;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 300px;
+    min-height: 48px;
+  }
+
+  .message-box {
+    padding: 1.2rem 0.9rem;
+  }
+
+  .quiz-wrap {
+    padding: 1rem 0.8rem;
+  }
+
+  .quiz-form fieldset {
+    padding: 0.65rem;
+  }
+
+  .landing h2 {
+    font-size: clamp(1.6rem, 5.5vw, 2.8rem);
+  }
+
+  .section-head h3,
+  .message-box h3,
+  .quiz-wrap h3 {
+    font-size: clamp(1.2rem, 3.8vw, 1.8rem);
+  }
+
+  .cake {
+    width: 180px;
+    height: 180px;
+  }
+
+  .plate {
+    width: 200px;
+    left: -10px;
+  }
+}
+
+/* =============================================
+   PHONE RESPONSIVE (≤ 420px)
+   ============================================= */
+@media (max-width: 420px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .panel {
+    padding: 4.5rem 0.5rem 1.5rem;
+    min-height: auto;
+  }
+
+  .top-nav nav {
+    gap: 0.25rem;
+    padding: 0.5rem 0.35rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .top-nav a {
+    font-size: 0.72rem;
+    padding: 0.28rem 0.5rem;
+  }
+
+  .intro-screen {
+    height: 100dvh;
+  }
+
+  .intro-bg {
+    inset: -3%;
+  }
+
+  .intro-content {
+    width: 96%;
+    padding: 1rem 0.6rem;
+  }
+
+  .intro-photo {
+    width: 100px;
+    margin-bottom: 0.5rem;
+  }
+
+  .intro-content h1 {
+    font-size: clamp(1.3rem, 5.5vw, 1.9rem);
+  }
+
+  .intro-hint {
+    font-size: 0.82rem;
+    margin: 0.6rem 0 0.6rem;
+  }
+
+  .typed-text {
+    font-size: 0.88rem;
+    min-height: 180px;
+    line-height: 1.65;
+  }
+
+  .typing-cursor {
+    font-size: 1rem;
+  }
+
+  #enterMainBtn {
+    bottom: 1.5rem;
+  }
+
+  .neon-btn {
+    padding: 0.72rem 1rem;
+    font-size: 0.88rem;
+    width: 100%;
+    max-width: 260px;
+    min-height: 48px;
+  }
+
+  .gallery {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .gallery img {
+    border-radius: 10px;
+    aspect-ratio: 16 / 10;
+  }
+
+  .memory-cards {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .memory-card {
+    padding: 0.8rem;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .content,
+  .section-head,
+  .quiz-wrap,
+  .message-box,
+  .final-section > div {
+    width: 100%;
+  }
+
+  .landing h2 {
+    font-size: clamp(1.4rem, 6vw, 2.2rem);
+  }
+
+  .landing p {
+    font-size: 0.9rem;
+    margin: 0.7rem 0 1.2rem;
+  }
+
+  .section-head h3,
+  .message-box h3,
+  .quiz-wrap h3 {
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+  }
+
+  .message-box {
+    padding: 1rem 0.7rem;
+  }
+
+  .message-box p {
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+
+  .quiz-wrap {
+    padding: 0.8rem 0.6rem;
+  }
+
+  .quiz-form fieldset {
+    padding: 0.55rem;
+    border-radius: 8px;
+  }
+
+  .quiz-form legend {
+    font-size: 0.9rem;
+  }
+
+  .quiz-form label {
+    font-size: 0.86rem;
+    margin: 0.35rem 0;
+  }
+
+  .quiz-result {
+    font-size: 0.88rem;
+  }
+
+  .final-text {
+    font-size: clamp(0.88rem, 2.8vw, 1.05rem);
+  }
+
+  .cake {
+    width: 160px;
+    height: 160px;
+  }
+
+  .plate {
+    width: 180px;
+    height: 14px;
+    left: -10px;
+  }
+
+  .birthday-banner h2 {
+    font-size: clamp(1.5rem, 8vw, 3rem);
+    letter-spacing: 0.03em;
+  }
+
+  .text-sparkles {
+    height: clamp(50px, 9vw, 80px);
+  }
+
+  .text-sparkles span {
+    width: 4px;
+  }
+
+  /* Celebration overlay */
+  .celebration-overlay {
+    overflow: hidden;
+  }
+
+  .celebration-stars i {
+    width: 1.5px;
+    height: 1.5px;
+  }
+}
+
+/* =============================================
+   VERY SMALL PHONES (≤ 360px)
+   ============================================= */
+@media (max-width: 360px) {
+  .top-nav a {
+    font-size: 0.68rem;
+    padding: 0.24rem 0.42rem;
+  }
+
+  .intro-photo {
+    width: 85px;
+  }
+
+  .intro-content h1 {
+    font-size: clamp(1.1rem, 5vw, 1.6rem);
+  }
+
+  .typed-text {
+    font-size: 0.82rem;
+    min-height: 160px;
+  }
+
+  .landing h2 {
+    font-size: clamp(1.2rem, 6vw, 1.8rem);
+  }
+
+  .cake {
+    width: 140px;
+    height: 140px;
+  }
+
+  .plate {
+    width: 160px;
+  }
+
+  .birthday-banner h2 {
+    font-size: clamp(1.2rem, 7.5vw, 2.2rem);
+  }
+}
+
+/* =============================================
+   LANDSCAPE PHONE MODE
+   ============================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+  .intro-screen {
+    height: 100dvh;
+  }
+
+  .intro-content {
+    padding: 0.7rem;
+  }
+
+  .intro-photo {
+    width: 70px;
+    margin-bottom: 0.3rem;
+  }
+
+  .intro-content h1 {
+    font-size: 1.2rem;
+  }
+
+  .typed-text {
+    min-height: 120px;
+    font-size: 0.82rem;
+  }
+
+  .panel {
+    min-height: auto;
+    padding: 4rem 0.8rem 1.5rem;
+  }
+
+  .cake {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+/* =============================================
+   SAFE AREA SUPPORT (Notched phones)
+   ============================================= */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .panel {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+
+  #enterMainBtn {
+    bottom: calc(2.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* =============================================
+   iOS Safari dvh fix
+   ============================================= */
+@supports (height: 100dvh) {
+  .intro-screen {
+    height: 100dvh;
+  }
+}
