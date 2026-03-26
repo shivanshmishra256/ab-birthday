@@ -33,7 +33,6 @@
       overflow-x: hidden;
       background: linear-gradient(145deg, var(--bg-night-1), var(--bg-night-2));
       position: relative;
-      backdrop-filter: blur(6px);
     }
 
     body::before {
@@ -54,11 +53,12 @@
       width: 100%;
       height: 100%;
       background: var(--bg-photo) center 14% / cover no-repeat;
-      filter: blur(2px);
+      filter: blur(1.2px);
       transform: scale(1);
       animation: zoomBg 20s ease-in-out infinite alternate;
       z-index: -3;
       pointer-events: none;
+      will-change: transform;
     }
 
     @media (max-width: 700px) {
@@ -225,6 +225,56 @@
       text-align: center;
     }
 
+    .slide-nav {
+      width: min(980px, 96vw);
+      margin-top: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .slide-nav-btn {
+      border: 1px solid rgba(255, 232, 171, 0.65);
+      background: rgba(6, 9, 22, 0.68);
+      color: #fff7dc;
+      border-radius: 999px;
+      padding: 0.5rem 0.9rem;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .slide-nav-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .slide-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .slide-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .slide-dot.active {
+      transform: scale(1.15);
+      background: #ffcc5b;
+      box-shadow: 0 0 10px rgba(255, 206, 91, 0.65);
+    }
+
     .slides-wrap {
       width: min(980px, 96vw);
       overflow: hidden;
@@ -237,6 +287,9 @@
       grid-auto-columns: 100%;
       width: 100%;
       transition: transform 620ms cubic-bezier(0.2, 0.85, 0.28, 1);
+      will-change: transform;
+      backface-visibility: hidden;
+      contain: layout paint;
     }
 
     .slide {
@@ -244,6 +297,7 @@
       padding: 0.2rem;
       display: grid;
       place-items: center;
+      contain: layout paint;
     }
 
     .message-card {
@@ -328,6 +382,42 @@
       border-radius: 10px;
       background: #04060f;
       min-height: 300px;
+      transform: translateZ(0);
+    }
+
+    body.reduced-effects .background,
+    body.reduced-effects .cinematic-bg,
+    body.reduced-effects .cake-container,
+    body.reduced-effects .bg-title,
+    body.reduced-effects .birthday-text.show,
+    body.reduced-effects .birthday-text h2,
+    body.reduced-effects .cake-message.show,
+    body.reduced-effects .party-entry-btn {
+      animation: none !important;
+    }
+
+    body.reduced-effects .intro-card,
+    body.reduced-effects .message-card,
+    body.reduced-effects .cake-stage,
+    body.reduced-effects .narration-box,
+    body.reduced-effects .bg-title {
+      backdrop-filter: none !important;
+    }
+
+    body.reduced-effects .light-rays::before,
+    body.reduced-effects .light-rays::after,
+    body.reduced-effects .magical-core,
+    body.reduced-effects .cinematic-bg {
+      filter: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
     }
 
     .video-wrap {
@@ -1469,6 +1559,8 @@
         background-position: center 12%;
         background-size: cover;
         transform: scale(1);
+        animation-duration: 30s;
+        filter: blur(0.8px);
       }
 
       .bg-title {
@@ -1489,6 +1581,15 @@
         border-radius: 16px;
       }
 
+      .slide-nav {
+        width: 100%;
+        margin-top: 0.55rem;
+      }
+
+      .slide-nav-btn {
+        min-height: 42px;
+      }
+
       .slide {
         padding: 0.1rem;
       }
@@ -1497,6 +1598,7 @@
         width: 100%;
         padding: 1rem 0.75rem 1.2rem;
         border-radius: 16px;
+        backdrop-filter: none;
       }
 
       .video-card {
@@ -1527,6 +1629,7 @@
         margin: 0.2rem auto 0;
         padding: 0.75rem 0.5rem 0.8rem;
         border-radius: 16px;
+        backdrop-filter: none;
       }
 
       .cake-cut-wrap {
@@ -1680,6 +1783,15 @@
       .slides-wrap {
         width: 100%;
         border-radius: 12px;
+      }
+
+      .slide-nav {
+        gap: 0.45rem;
+      }
+
+      .slide-nav-btn {
+        flex: 1 1 42%;
+        min-width: 120px;
       }
 
       .slide {
@@ -2059,8 +2171,8 @@
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">Happy Birthday to the most beautiful soul ✨ You make life brighter just by being in it.</p>
-                  <video controls playsinline preload="metadata">
-                    <source src="WhatsApp Video 2026-03-22 at 11.00.57.mp4" type="video/mp4" />
+                  <video controls playsinline preload="none" class="lazy-video">
+                    <source data-src="WhatsApp Video 2026-03-22 at 11.00.57.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
@@ -2126,80 +2238,80 @@
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">Chutki Special ❤️</p>
-                  <video id="astha2Video" controls playsinline preload="metadata">
-                    <source src="astha 2.mp4" type="video/mp4" />
+                  <video id="astha2Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha 2.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">Cuteness Overloded Disha</p>
-                  <video id="astha3Video" controls playsinline preload="metadata">
-                    <source src="astha3.mp4" type="video/mp4" />
+                  <video id="astha3Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha3.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">Happy Birthday Mutki..</p>
-                  <video id="astha4Video" controls playsinline preload="metadata">
-                    <source src="astha4.mp4" type="video/mp4" />
+                  <video id="astha4Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha4.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">khubsurat kudii</p>
-                  <video id="astha5Video" controls playsinline preload="metadata">
-                    <source src="astha 5.mp4" type="video/mp4" />
+                  <video id="astha5Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha 5.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">My thought for you</p>
-                  <video id="astha6Video" controls playsinline preload="metadata">
-                    <source src="astha 6.mp4" type="video/mp4" />
+                  <video id="astha6Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha 6.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">what i feel for u</p>
-                  <video id="astha7Video" controls playsinline preload="metadata">
-                    <source src="astha7.mp4" type="video/mp4" />
+                  <video id="astha7Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha7.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">love ❤️</p>
-                  <video id="astha8Video" controls playsinline preload="metadata">
-                    <source src="astha 8.mp4" type="video/mp4" />
+                  <video id="astha8Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha 8.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">tenu dekh k ji lagda</p>
-                  <video id="astha9Video" controls playsinline preload="metadata">
-                    <source src="astha 9.mp4" type="video/mp4" />
+                  <video id="astha9Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha 9.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">jug jug jive</p>
-                  <video id="astha10Video" controls playsinline preload="metadata">
-                    <source src="astha10.mp4" type="video/mp4" />
+                  <video id="astha10Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha10.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">tu nhi to kuch bhi nhi</p>
-                  <video id="astha11Video" controls playsinline preload="metadata">
-                    <source src="astha11.mp4" type="video/mp4" />
+                  <video id="astha11Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha11.mp4" type="video/mp4" />
                   </video>
                   <button id="openAstha12Btn" class="video-tap-hint video-tap-btn" type="button">kya tum mere se milna chahte ho, to isko tap karna warna nhi <span class="video-tap-icon" aria-hidden="true">👆</span></button>
                 </div>
@@ -2216,16 +2328,16 @@
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">koi nhi hi tere jaisa</p>
-                  <video id="astha12Video" controls playsinline preload="metadata">
-                    <source src="astha12.mp4" type="video/mp4" />
+                  <video id="astha12Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha12.mp4" type="video/mp4" />
                   </video>
                 </div>
               </div>
               <div class="video-card">
                 <div class="video-wrap">
                   <p class="video-message">wada hai mera</p>
-                  <video id="astha13Video" controls playsinline preload="metadata">
-                    <source src="astha13.mp4" type="video/mp4" />
+                  <video id="astha13Video" controls playsinline preload="none" class="lazy-video">
+                    <source data-src="astha13.mp4" type="video/mp4" />
                   </video>
                   <p class="contact-note">kaisa lga, agar acha laga ho to bass khush ho jaao tum. aur ek smile wali birthday ki pic agar tumko sahi lage to bhej do, warna koi baat nhi. enjoy your day sabse pyari dost. msg kardo dekh liya to yahi se sidha mere niche whatsapp icon par contact kar do.</p>
                   <a class="contact-wa-btn" href="https://wa.me/916388818343?text=Hi%2C%20maine%20video%20dekh%20liya%20%F0%9F%98%8A" target="_blank" rel="noopener noreferrer">
@@ -2238,6 +2350,11 @@
           </article>
         </section>
       </div>
+    </div>
+    <div class="slide-nav" aria-label="Slide controls">
+      <button id="prevSlideBtn" class="slide-nav-btn" type="button">Previous</button>
+      <div id="slideDots" class="slide-dots" role="tablist" aria-label="Slides"></div>
+      <button id="nextSlideBtn" class="slide-nav-btn" type="button">Next</button>
     </div>
   </main>
 
@@ -2261,939 +2378,13 @@
     </div>
   </section>
 
-  <audio id="introVoice" src="ElevenLabs_2026-03-21T03_48_26_Adam - Dominant, Firm_pre_sp100_s50_sb75_se0_b_m2.mp3" preload="auto"></audio>
-  <audio id="birthdaySong" preload="auto">
-    <source src="birthday.mp3" type="audio/mpeg" />
+  <audio id="introVoice" src="ElevenLabs_2026-03-21T03_48_26_Adam - Dominant, Firm_pre_sp100_s50_sb75_se0_b_m2.mp3" preload="metadata"></audio>
+  <audio id="birthdaySong" preload="none">
     <source src="birthday_wala_wish.mp3" type="audio/mpeg" />
+    <source src="birthday.mp3" type="audio/mpeg" />
   </audio>
-  <audio id="cutSound" src="cut.mp3" preload="auto"></audio>
+  <audio id="cutSound" src="birthday_wala_wish.mp3" preload="none"></audio>
 
-  <script>
-    const intro = document.getElementById("intro");
-    const enterBtn = document.getElementById("enterBtn");
-    const mainContent = document.getElementById("mainContent");
-    const celebration = document.getElementById("celebration");
-    const slidesTrack = document.getElementById("slidesTrack");
-    const openVideoSlideBtn = document.getElementById("openVideoSlideBtn");
-    const openCakeSlideBtn = document.getElementById("openCakeSlideBtn");
-    const openAstha12Btn = document.getElementById("openAstha12Btn");
-    const astha2Video = document.getElementById("astha2Video");
-    const astha12Video = document.getElementById("astha12Video");
-    const surpriseVideos = Array.from(document.querySelectorAll(".video-grid video"));
-    const cakeStage = document.getElementById("cakeStage");
-    const cakeCutWrap = document.getElementById("cakeCutWrap");
-    const cakeMessage = document.getElementById("cakeMessage");
-    const cakeHint = document.getElementById("cakeHint");
-    const recutCakeBtn = document.getElementById("recutCakeBtn");
-    const partyEntryBtn = document.getElementById("partyEntryBtn");
-    const cakeConfettiCanvas = document.getElementById("cakeConfettiCanvas");
-    const cakeCrumbs = document.getElementById("cakeCrumbs");
-    const birthdayText = document.getElementById("birthdayText");
-    const textSparkles = document.getElementById("textSparkles");
-    const narrationBox = document.getElementById("narrationBox");
-    const narrationText = document.getElementById("narrationText");
-    const nextSurpriseBtn = document.getElementById("nextSurpriseBtn");
-    const stars = document.getElementById("stars");
-    const particlesLayer = document.getElementById("particles");
-    const fireworksCanvas = document.getElementById("fireworksCanvas");
-    const confettiCanvas = document.getElementById("confettiCanvas");
-    const introVoice = document.getElementById("introVoice");
-    const birthdaySong = document.getElementById("birthdaySong");
-    const cutSound = document.getElementById("cutSound");
-
-    const fwCtx = fireworksCanvas.getContext("2d");
-    const cfCtx = confettiCanvas.getContext("2d");
-    const cakeCtx = cakeConfettiCanvas.getContext("2d");
-
-    let played = false;
-    let fireworksRunning = false;
-    let confettiRunning = false;
-    let frameId;
-    let confettiFrameId;
-    let lastLaunch = 0;
-    let rockets = [];
-    let sparks = [];
-    let confettiPieces = [];
-    let sparkleTimer;
-    let narrationTimer;
-    let lastFireworkFrame = 0;
-    let lastConfettiFrame = 0;
-    let lastShakeAt = 0;
-    let popAudioContext;
-    let activeSlideIndex = 0;
-    let cakeCutDone = false;
-    let isVideoSequenceRunning = false;
-    let cakeConfettiFrameId;
-    let cakeConfettiPieces = [];
-    let slideVideoAutoplayTimer;
-    let scrollAutoplayRaf = 0;
-
-    const palette = ["#ffd166", "#ff6bb8", "#5da9ff", "#a575ff", "#fff5b7"];
-    const narrationScript = `Hello Astha, main Shivansh...
-  Aaj ka din bada special hai for you,
-  so wishing you a happiest birthday dost.
-  Aise hi khush raho, hamesha muskurate raho,
-  khub tarakki karo.
-  Aur aaj ka din to bhayankar tarike se jiyo...
-  Abhi aage aur bhi bahut kuch hai,
-  so wait... aur enter karo.`;
-
-    function sizeCanvases() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-
-      fireworksCanvas.width = Math.floor(w * dpr);
-      fireworksCanvas.height = Math.floor(h * dpr);
-      fireworksCanvas.style.width = `${w}px`;
-      fireworksCanvas.style.height = `${h}px`;
-      fwCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      confettiCanvas.width = Math.floor(w * dpr);
-      confettiCanvas.height = Math.floor(h * dpr);
-      confettiCanvas.style.width = `${w}px`;
-      confettiCanvas.style.height = `${h}px`;
-      cfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      const cakeRect = cakeCutWrap.getBoundingClientRect();
-      const cw = Math.max(1, Math.floor(cakeRect.width));
-      const ch = Math.max(1, Math.floor(cakeRect.height));
-      cakeConfettiCanvas.width = Math.floor(cw * dpr);
-      cakeConfettiCanvas.height = Math.floor(ch * dpr);
-      cakeConfettiCanvas.style.width = `${cw}px`;
-      cakeConfettiCanvas.style.height = `${ch}px`;
-      cakeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function buildStars() {
-      const count = window.innerWidth < 700 ? 70 : 120;
-      for (let i = 0; i < count; i += 1) {
-        const star = document.createElement("i");
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.setProperty("--dur", `${2.2 + Math.random() * 2.6}s`);
-        star.style.setProperty("--delay", `${Math.random() * 2.4}s`);
-        stars.appendChild(star);
-      }
-    }
-
-    function buildFloatingParticles() {
-      const count = window.innerWidth < 700 ? 20 : 34;
-      for (let i = 0; i < count; i += 1) {
-        const orb = document.createElement("i");
-        orb.style.left = `${Math.random() * 100}%`;
-        orb.style.bottom = `${-10 - Math.random() * 35}%`;
-        orb.style.setProperty("--float-dur", `${6 + Math.random() * 4}s`);
-        orb.style.setProperty("--float-delay", `${Math.random() * 5}s`);
-        particlesLayer.appendChild(orb);
-      }
-    }
-
-    function launchRocket() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const fromX = w * (0.12 + Math.random() * 0.76);
-      const targetX = w * (0.1 + Math.random() * 0.8);
-      const targetY = h * (0.16 + Math.random() * 0.42);
-      const trail = [];
-
-      rockets.push({
-        x: fromX,
-        y: h + 15,
-        vx: (targetX - fromX) / (30 + Math.random() * 20),
-        vy: -6.1 - Math.random() * 2.5,
-        targetY,
-        color: palette[Math.floor(Math.random() * palette.length)],
-        trail
-      });
-    }
-
-    function addExplosion(x, y) {
-      const burstCount = window.innerWidth < 700 ? 38 : 64;
-      for (let i = 0; i < burstCount; i += 1) {
-        const angle = (Math.PI * 2 * i) / burstCount + (Math.random() - 0.5) * 0.25;
-        const speed = 1.2 + Math.random() * 3.7;
-
-        sparks.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          drag: 0.985,
-          gravity: 0.045 + Math.random() * 0.03,
-          alpha: 1,
-          radius: 1.2 + Math.random() * 2.1,
-          color: palette[Math.floor(Math.random() * palette.length)]
-        });
-      }
-
-      // Throttled shake keeps impact without visual jitter.
-      const now = performance.now();
-      if (now - lastShakeAt > 260) {
-        lastShakeAt = now;
-        celebration.classList.add("screen-shake");
-        setTimeout(() => celebration.classList.remove("screen-shake"), 220);
-      }
-      playSoftPop();
-    }
-
-    function drawRocketTrail(rocket) {
-      rocket.trail.push({ x: rocket.x, y: rocket.y });
-      if (rocket.trail.length > 8) {
-        rocket.trail.shift();
-      }
-
-      for (let i = 0; i < rocket.trail.length; i += 1) {
-        const point = rocket.trail[i];
-        const alpha = i / rocket.trail.length;
-        fwCtx.beginPath();
-        fwCtx.arc(point.x, point.y, 2, 0, Math.PI * 2);
-        fwCtx.fillStyle = `${rocket.color}${Math.floor(alpha * 255).toString(16).padStart(2, "0")}`;
-        fwCtx.fill();
-      }
-    }
-
-    function animateFireworks(now) {
-      if (!fireworksRunning) {
-        return;
-      }
-
-      const delta = Math.min(2.1, Math.max(0.7, (now - lastFireworkFrame) / 16.67 || 1));
-      lastFireworkFrame = now;
-
-      fwCtx.fillStyle = "rgba(3, 4, 14, 0.1)";
-      fwCtx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-
-      const interval = window.innerWidth < 700 ? 330 : 210;
-      if (now - lastLaunch > interval) {
-        launchRocket();
-        if (Math.random() > 0.72) {
-          launchRocket();
-        }
-        lastLaunch = now;
-      }
-
-      for (let i = rockets.length - 1; i >= 0; i -= 1) {
-        const rocket = rockets[i];
-        rocket.x += rocket.vx * delta;
-        rocket.y += rocket.vy * delta;
-        rocket.vy += 0.035 * delta;
-
-        drawRocketTrail(rocket);
-
-        fwCtx.beginPath();
-        fwCtx.arc(rocket.x, rocket.y, 2.6, 0, Math.PI * 2);
-        fwCtx.fillStyle = rocket.color;
-        fwCtx.fill();
-
-        if (rocket.y <= rocket.targetY || rocket.vy >= 0.2) {
-          addExplosion(rocket.x, rocket.y);
-          rockets.splice(i, 1);
-        }
-      }
-
-      for (let i = sparks.length - 1; i >= 0; i -= 1) {
-        const p = sparks[i];
-        p.vx *= Math.pow(p.drag, delta);
-        p.vy *= Math.pow(p.drag, delta);
-        p.vy += p.gravity * delta;
-        p.x += p.vx * delta;
-        p.y += p.vy * delta;
-        p.alpha -= 0.015 * delta;
-
-        if (p.alpha <= 0) {
-          sparks.splice(i, 1);
-          continue;
-        }
-
-        fwCtx.beginPath();
-        fwCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        const hexAlpha = Math.max(0, Math.floor(p.alpha * 255)).toString(16).padStart(2, "0");
-        fwCtx.fillStyle = `${p.color}${hexAlpha}`;
-        fwCtx.fill();
-      }
-
-      frameId = requestAnimationFrame(animateFireworks);
-    }
-
-    function seedConfetti() {
-      const count = window.innerWidth < 700 ? 90 : 150;
-      confettiPieces = [];
-      for (let i = 0; i < count; i += 1) {
-        confettiPieces.push({
-          x: Math.random() * window.innerWidth,
-          y: -Math.random() * window.innerHeight,
-          size: 4 + Math.random() * 8,
-          vy: 0.8 + Math.random() * 1.8,
-          vx: (Math.random() - 0.5) * 0.8,
-          tilt: Math.random() * Math.PI * 2,
-          spin: 0.03 + Math.random() * 0.06,
-          color: palette[Math.floor(Math.random() * palette.length)]
-        });
-      }
-    }
-
-    function animateConfetti() {
-      if (!confettiRunning) {
-        return;
-      }
-
-      const now = performance.now();
-      const delta = Math.min(2, Math.max(0.7, (now - lastConfettiFrame) / 16.67 || 1));
-      lastConfettiFrame = now;
-
-      cfCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      for (const c of confettiPieces) {
-        c.x += c.vx * delta;
-        c.y += c.vy * delta;
-        c.tilt += c.spin * delta;
-
-        if (c.y > window.innerHeight + 14) {
-          c.y = -20;
-          c.x = Math.random() * window.innerWidth;
-        }
-
-        cfCtx.save();
-        cfCtx.translate(c.x, c.y);
-        cfCtx.rotate(c.tilt);
-        cfCtx.fillStyle = c.color;
-        cfCtx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.58);
-        cfCtx.restore();
-      }
-
-      confettiFrameId = requestAnimationFrame(animateConfetti);
-    }
-
-    function spawnTextSparkle() {
-      if (textSparkles.childElementCount > 45) {
-        return;
-      }
-
-      const sparkle = document.createElement("span");
-      sparkle.style.left = `${Math.random() * 100}%`;
-      sparkle.style.top = `${8 + Math.random() * 80}%`;
-      sparkle.style.setProperty("--sx", `${(Math.random() - 0.5) * 90}px`);
-      sparkle.style.setProperty("--sy", `${-18 - Math.random() * 75}px`);
-      textSparkles.appendChild(sparkle);
-      setTimeout(() => sparkle.remove(), 900);
-    }
-
-    function typeNarration(speed) {
-      clearInterval(narrationTimer);
-      narrationText.textContent = "";
-      narrationBox.classList.add("show");
-
-      let idx = 0;
-      narrationTimer = setInterval(() => {
-        narrationText.textContent += narrationScript[idx] || "";
-        idx += 1;
-
-        if (idx >= narrationScript.length) {
-          clearInterval(narrationTimer);
-        }
-      }, speed);
-
-      return narrationScript.length * speed;
-    }
-
-    function speechFallback() {
-      if (!("speechSynthesis" in window)) {
-        return;
-      }
-
-      const u = new SpeechSynthesisUtterance(narrationScript);
-      u.lang = "hi-IN";
-      u.rate = 0.95;
-      u.pitch = 1;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    }
-
-    async function startNarration() {
-      let speed = 46;
-
-      if (Number.isFinite(introVoice.duration) && introVoice.duration > 0) {
-        speed = Math.max(28, Math.min(85, Math.round((introVoice.duration * 1000) / narrationScript.length)));
-      }
-
-      const estimatedMs = typeNarration(speed);
-
-      try {
-        introVoice.currentTime = 0;
-        introVoice.volume = 1;
-        await introVoice.play();
-      } catch (error) {
-        speechFallback();
-      }
-
-      return Math.max(estimatedMs + 1600, 7800);
-    }
-
-    function playSoftPop() {
-      if (!window.AudioContext && !window.webkitAudioContext) {
-        return;
-      }
-
-      if (Math.random() > 0.35) {
-        return;
-      }
-
-      const AudioRef = window.AudioContext || window.webkitAudioContext;
-      if (!popAudioContext) {
-        popAudioContext = new AudioRef();
-      }
-
-      const osc = popAudioContext.createOscillator();
-      const gain = popAudioContext.createGain();
-      const now = popAudioContext.currentTime;
-
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(160 + Math.random() * 120, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.02, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-
-      osc.connect(gain);
-      gain.connect(popAudioContext.destination);
-      osc.start(now);
-      osc.stop(now + 0.15);
-    }
-
-    function stopBirthdaySong() {
-      birthdaySong.pause();
-      birthdaySong.currentTime = 0;
-      birthdaySong.volume = 0.62;
-    }
-
-    async function playBirthdaySong() {
-      birthdaySong.currentTime = 0;
-      birthdaySong.volume = 0.62;
-
-      try {
-        await document.getElementById("birthdaySong").play();
-      } catch (error) {
-        // Ignore if browser blocks playback; cut flow still runs.
-      }
-    }
-
-    function stopCelebration() {
-      fireworksRunning = false;
-      confettiRunning = false;
-      cancelAnimationFrame(frameId);
-      cancelAnimationFrame(confettiFrameId);
-      clearInterval(sparkleTimer);
-      clearInterval(narrationTimer);
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      introVoice.pause();
-      stopBirthdaySong();
-      narrationBox.classList.remove("show");
-      nextSurpriseBtn.classList.add("hidden");
-      narrationText.textContent = "";
-      rockets = [];
-      sparks = [];
-
-      setTimeout(() => {
-        celebration.classList.remove("active");
-        setTimeout(() => celebration.classList.add("hidden"), 700);
-      }, 200);
-    }
-
-    function setMainSlide(index) {
-      activeSlideIndex = Math.max(0, Math.min(4, index));
-      slidesTrack.style.transform = `translateX(-${activeSlideIndex * 100}%)`;
-
-      // Reset vertical scroll when changing slides so key content appears immediately.
-      if (window.scrollY > 0) {
-        window.scrollTo({ top: 0, behavior: "auto" });
-      }
-
-      clearTimeout(slideVideoAutoplayTimer);
-      slideVideoAutoplayTimer = setTimeout(() => {
-        autoplayVisibleVideoInActiveSlide();
-      }, 680);
-
-      if (activeSlideIndex === 2 && cakeStage) {
-        setTimeout(() => {
-          cakeStage.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 700);
-      }
-
-      if (activeSlideIndex === 4 && astha12Video) {
-        setTimeout(() => {
-          astha12Video.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 700);
-      }
-    }
-
-    function getVisibilityRatio(video) {
-      const rect = video.getBoundingClientRect();
-      const visibleTop = Math.max(rect.top, 0);
-      const visibleBottom = Math.min(rect.bottom, window.innerHeight);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-      if (rect.height <= 0) {
-        return 0;
-      }
-
-      return visibleHeight / rect.height;
-    }
-
-    async function playWithFallback(video) {
-      try {
-        await video.play();
-      } catch (error) {
-        video.muted = true;
-        await video.play().catch(() => {
-          // Ignore when autoplay is still blocked by browser policy.
-        });
-      }
-    }
-
-    async function autoplayVisibleVideoInActiveSlide() {
-      if (mainContent.classList.contains("hidden") || !slidesTrack) {
-        return;
-      }
-
-      const activeSlide = slidesTrack.children[activeSlideIndex];
-      if (!activeSlide) {
-        return;
-      }
-
-      const slideVideos = Array.from(activeSlide.querySelectorAll("video"));
-      if (!slideVideos.length) {
-        return;
-      }
-
-      let targetVideo = slideVideos[0];
-      let bestRatio = 0;
-
-      for (const video of slideVideos) {
-        const ratio = getVisibilityRatio(video);
-        if (ratio > bestRatio) {
-          bestRatio = ratio;
-          targetVideo = video;
-        }
-      }
-
-      surpriseVideos.forEach((video) => {
-        if (video !== targetVideo) {
-          video.pause();
-        }
-      });
-
-      if (targetVideo.paused) {
-        targetVideo.currentTime = 0;
-      }
-      await playWithFallback(targetVideo);
-    }
-
-    async function playAstha2Video() {
-      if (!astha2Video) {
-        return;
-      }
-
-      surpriseVideos.forEach((video) => {
-        if (video !== astha2Video) {
-          video.pause();
-          video.currentTime = 0;
-        }
-      });
-
-      astha2Video.currentTime = 0;
-      try {
-        await astha2Video.play();
-      } catch (error) {
-        astha2Video.muted = true;
-        await astha2Video.play().catch(() => {
-          // Ignore if autoplay still blocked.
-        });
-      }
-    }
-
-    async function playVideoFromPartyEntry() {
-      if (!surpriseVideos.length) {
-        return;
-      }
-
-      const whatsappVideo = surpriseVideos.find((video) => {
-        const source = video.querySelector("source");
-        return (source?.getAttribute("src") || "").toLowerCase().includes("whatsapp");
-      });
-      const firstVideo = whatsappVideo || surpriseVideos[0];
-
-      // Bring the video into view immediately after cake flow transition.
-      firstVideo.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      // Keep only one video active when entering from cake celebration.
-      surpriseVideos.slice(1).forEach((video) => {
-        video.pause();
-      });
-
-      firstVideo.currentTime = 0;
-      try {
-        await firstVideo.play();
-      } catch (error) {
-        // Fallback for strict autoplay policies in some browsers.
-        firstVideo.muted = true;
-        await firstVideo.play().catch(() => {
-          // Ignore if play is still blocked.
-        });
-      }
-    }
-
-    function setupHoverPlayForVideos() {
-      const supportsHover = window.matchMedia("(hover: hover)").matches;
-      if (!supportsHover || !surpriseVideos.length) {
-        return;
-      }
-
-      const pauseOthers = (currentVideo) => {
-        surpriseVideos.forEach((video) => {
-          if (video !== currentVideo) {
-            video.pause();
-            const wrap = video.closest(".video-wrap");
-            if (wrap) {
-              wrap.classList.remove("is-playing");
-            }
-          }
-        });
-      };
-
-      surpriseVideos.forEach((video) => {
-        const wrap = video.closest(".video-wrap");
-
-        video.addEventListener("mouseenter", async () => {
-          pauseOthers(video);
-
-          try {
-            await video.play();
-          } catch (error) {
-            video.muted = true;
-            await video.play().catch(() => {
-              // Ignore if browser blocks hover autoplay.
-            });
-          }
-
-          if (wrap) {
-            wrap.classList.add("is-playing");
-          }
-        });
-
-        video.addEventListener("mouseleave", () => {
-          video.pause();
-          if (wrap) {
-            wrap.classList.remove("is-playing");
-          }
-        });
-
-        video.addEventListener("play", () => {
-          pauseOthers(video);
-          if (wrap) {
-            wrap.classList.add("is-playing");
-          }
-        });
-
-        video.addEventListener("pause", () => {
-          if (wrap) {
-            wrap.classList.remove("is-playing");
-          }
-        });
-      });
-    }
-
-    async function playVideosSequentially() {
-      if (!surpriseVideos.length || isVideoSequenceRunning) {
-        return;
-      }
-
-      isVideoSequenceRunning = true;
-
-      try {
-        for (const video of surpriseVideos) {
-          surpriseVideos.forEach((item) => {
-            if (item !== video) {
-              item.pause();
-              item.currentTime = 0;
-            }
-          });
-
-          video.scrollIntoView({ behavior: "smooth", block: "center" });
-          video.currentTime = 0;
-
-          try {
-            await video.play();
-          } catch (error) {
-            video.muted = true;
-            await video.play().catch(() => {
-              // Ignore if autoplay stays blocked.
-            });
-          }
-
-          await new Promise((resolve) => {
-            let done = false;
-            const finish = () => {
-              if (done) {
-                return;
-              }
-              done = true;
-              video.removeEventListener("ended", finish);
-              clearTimeout(timeoutId);
-              resolve();
-            };
-
-            const timeoutMs = Number.isFinite(video.duration) && video.duration > 0
-              ? Math.min(video.duration * 1000 + 1200, 90000)
-              : 90000;
-
-            const timeoutId = setTimeout(finish, timeoutMs);
-            video.addEventListener("ended", finish, { once: true });
-          });
-        }
-      } finally {
-        isVideoSequenceRunning = false;
-      }
-    }
-
-    function seedCakeConfetti() {
-      const w = cakeCutWrap.clientWidth;
-      const h = cakeCutWrap.clientHeight;
-      const count = window.innerWidth < 700 ? 90 : 140;
-      cakeConfettiPieces = [];
-
-      for (let i = 0; i < count; i += 1) {
-        cakeConfettiPieces.push({
-          x: Math.random() * w,
-          y: -Math.random() * h,
-          vx: (Math.random() - 0.5) * 1.6,
-          vy: 1 + Math.random() * 2.4,
-          size: 4 + Math.random() * 8,
-          tilt: Math.random() * Math.PI * 2,
-          spin: 0.03 + Math.random() * 0.08,
-          life: 220 + Math.random() * 120,
-          color: palette[Math.floor(Math.random() * palette.length)]
-        });
-      }
-    }
-
-    function animateCakeConfetti() {
-      const w = cakeCutWrap.clientWidth;
-      const h = cakeCutWrap.clientHeight;
-      cakeCtx.clearRect(0, 0, w, h);
-
-      let alive = 0;
-      for (const p of cakeConfettiPieces) {
-        if (p.life <= 0) {
-          continue;
-        }
-
-        p.x += p.vx;
-        p.y += p.vy;
-        p.tilt += p.spin;
-        p.life -= 1;
-
-        if (p.y > h + 22) {
-          p.life = 0;
-          continue;
-        }
-
-        alive += 1;
-        cakeCtx.save();
-        cakeCtx.translate(p.x, p.y);
-        cakeCtx.rotate(p.tilt);
-        cakeCtx.fillStyle = p.color;
-        cakeCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.58);
-        cakeCtx.restore();
-      }
-
-      if (alive > 0) {
-        cakeConfettiFrameId = requestAnimationFrame(animateCakeConfetti);
-      } else {
-        cancelAnimationFrame(cakeConfettiFrameId);
-      }
-    }
-
-    function spawnCakeCrumbs() {
-      const crumbCount = window.innerWidth < 700 ? 16 : 24;
-      const colors = ["#8f5a42", "#f1c2d5", "#ffe5bf", "#fff0d8"];
-
-      for (let i = 0; i < crumbCount; i += 1) {
-        const crumb = document.createElement("i");
-        crumb.style.left = `${48 + (Math.random() - 0.5) * 8}%`;
-        crumb.style.top = `${58 + Math.random() * 8}%`;
-        crumb.style.setProperty("--dx", `${(Math.random() - 0.5) * 150}px`);
-        crumb.style.setProperty("--dy", `${85 + Math.random() * 110}px`);
-        crumb.style.setProperty("--cdur", `${780 + Math.random() * 420}ms`);
-        crumb.style.setProperty("--crumb", colors[Math.floor(Math.random() * colors.length)]);
-        cakeCrumbs.appendChild(crumb);
-
-        setTimeout(() => {
-          crumb.remove();
-        }, 1300);
-      }
-    }
-
-    function cutCakeNow() {
-      if (cakeCutDone) {
-        return;
-      }
-
-      cakeCutDone = true;
-      cakeCutWrap.classList.add("punch");
-      setTimeout(() => cakeCutWrap.classList.remove("punch"), 360);
-
-      if (navigator.vibrate) {
-        navigator.vibrate([18, 18, 26]);
-      }
-
-      cutSound.currentTime = 0;
-      cutSound.volume = 0.8;
-      cutSound.play().catch(() => {
-        // Ignore if blocked.
-      });
-      playBirthdaySong();
-
-      // Start the cinematic split after tap.
-      setTimeout(() => {
-        cakeCutWrap.classList.add("cut");
-      }, 180);
-
-      setTimeout(() => {
-        cakeHint.textContent = "Perfect cut!";
-        cakeMessage.classList.add("show");
-        recutCakeBtn.classList.remove("hidden");
-        cakeStage.classList.add("shake");
-        setTimeout(() => cakeStage.classList.remove("shake"), 320);
-        seedCakeConfetti();
-        animateCakeConfetti();
-        spawnCakeCrumbs();
-      }, 1200);
-    }
-
-    function resetCakeCut() {
-      cakeCutDone = false;
-      cakeCutWrap.classList.remove("cut", "punch");
-      cakeMessage.classList.remove("show");
-      recutCakeBtn.classList.add("hidden");
-      cakeHint.textContent = "Please tap on cake and cut the cake";
-      cutSound.pause();
-      cutSound.currentTime = 0;
-      stopBirthdaySong();
-      cakeCtx.clearRect(0, 0, cakeCutWrap.clientWidth, cakeCutWrap.clientHeight);
-      cancelAnimationFrame(cakeConfettiFrameId);
-      cakeConfettiPieces = [];
-      cakeCrumbs.innerHTML = "";
-    }
-
-    function showNextSurpriseOption() {
-      nextSurpriseBtn.classList.remove("hidden");
-      nextSurpriseBtn.focus();
-    }
-
-    function runCinematicSequence() {
-      if (played) {
-        return;
-      }
-      played = true;
-
-      intro.classList.add("fade-out"); // 0.3s fade of current scene.
-      setTimeout(() => {
-        intro.classList.add("hidden");
-      }, 300);
-
-      celebration.classList.remove("hidden");
-      requestAnimationFrame(() => celebration.classList.add("active"));
-
-      // 0.5s: fireworks start.
-      setTimeout(() => {
-        fireworksRunning = true;
-        confettiRunning = true;
-        seedConfetti();
-        lastLaunch = 0;
-        lastFireworkFrame = performance.now();
-        lastConfettiFrame = performance.now();
-        frameId = requestAnimationFrame(animateFireworks);
-        confettiFrameId = requestAnimationFrame(animateConfetti);
-      }, 500);
-
-      // 1.5s: grand text reveal.
-      setTimeout(() => {
-        birthdayText.classList.add("show");
-        sparkleTimer = setInterval(spawnTextSparkle, 130);
-      }, 1500);
-
-      // Narration also starts after enter so every spoken line appears on screen.
-      setTimeout(async () => {
-        const totalNarrationMs = await startNarration();
-
-        // Narration ends, then show the next surprise entry option.
-        setTimeout(showNextSurpriseOption, totalNarrationMs);
-      }, 900);
-    }
-
-    function enterFirstSmileSurprise() {
-      nextSurpriseBtn.classList.add("hidden");
-      stopCelebration();
-
-      setTimeout(() => {
-        resetCakeCut();
-        setMainSlide(2);
-        mainContent.classList.remove("hidden");
-      }, 460);
-    }
-
-    sizeCanvases();
-    buildStars();
-    buildFloatingParticles();
-    setupHoverPlayForVideos();
-
-    window.addEventListener("resize", sizeCanvases);
-    window.addEventListener("scroll", () => {
-      if (activeSlideIndex !== 1 && activeSlideIndex !== 3 && activeSlideIndex !== 4) {
-        return;
-      }
-
-      if (scrollAutoplayRaf) {
-        return;
-      }
-
-      scrollAutoplayRaf = requestAnimationFrame(async () => {
-        scrollAutoplayRaf = 0;
-        await autoplayVisibleVideoInActiveSlide();
-      });
-    }, { passive: true });
-    slidesTrack.addEventListener("transitionend", () => {
-      autoplayVisibleVideoInActiveSlide();
-    });
-    enterBtn.addEventListener("click", runCinematicSequence);
-    nextSurpriseBtn.addEventListener("click", enterFirstSmileSurprise);
-    openVideoSlideBtn.addEventListener("click", () => setMainSlide(1));
-    openCakeSlideBtn.addEventListener("click", async () => {
-      setMainSlide(3);
-      await playAstha2Video();
-    });
-    openAstha12Btn.addEventListener("click", () => {
-      setMainSlide(4);
-    });
-    cakeCutWrap.addEventListener("click", cutCakeNow);
-    cakeCutWrap.addEventListener("touchstart", cutCakeNow, { passive: true });
-    cakeCutWrap.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        cutCakeNow();
-      }
-    });
-    recutCakeBtn.addEventListener("click", resetCakeCut);
-    partyEntryBtn.addEventListener("click", async () => {
-      // Moving away from cake slide should immediately stop cake-audio cues.
-      cutSound.pause();
-      cutSound.currentTime = 0;
-      stopBirthdaySong();
-
-      setMainSlide(1);
-      await playVideoFromPartyEntry();
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>

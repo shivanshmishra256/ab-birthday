@@ -1,18 +1,69 @@
-const introSection = document.getElementById("intro");
+// Consistently sized and optimized script for Cinematic Birthday Surprise
+const intro = document.getElementById("intro");
+const enterBtn = document.getElementById("enterBtn");
 const mainContent = document.getElementById("mainContent");
-const typedTextEl = document.getElementById("typedText");
-const enterMainBtn = document.getElementById("enterMainBtn");
-const startVoiceBtn = document.getElementById("startVoiceBtn");
-const introHint = document.getElementById("introHint");
-const voiceAudio = document.getElementById("voice");
-const bgMusic = document.getElementById("bgMusic");
-const celebrationOverlay = document.getElementById("celebrationOverlay");
-const fireworksCanvas = document.getElementById("fireworksCanvas");
-const birthdayBanner = document.getElementById("birthdayBanner");
+const celebration = document.getElementById("celebration");
+const slidesTrack = document.getElementById("slidesTrack");
+const openVideoSlideBtn = document.getElementById("openVideoSlideBtn");
+const openCakeSlideBtn = document.getElementById("openCakeSlideBtn");
+const openAstha12Btn = document.getElementById("openAstha12Btn");
+const prevSlideBtn = document.getElementById("prevSlideBtn");
+const nextSlideBtn = document.getElementById("nextSlideBtn");
+const slideDotsWrap = document.getElementById("slideDots");
+const astha2Video = document.getElementById("astha2Video");
+const astha12Video = document.getElementById("astha12Video");
+const surpriseVideos = Array.from(document.querySelectorAll(".video-grid video"));
+const cakeStage = document.getElementById("cakeStage");
+const cakeCutWrap = document.getElementById("cakeCutWrap");
+const cakeMessage = document.getElementById("cakeMessage");
+const cakeHint = document.getElementById("cakeHint");
+const recutCakeBtn = document.getElementById("recutCakeBtn");
+const partyEntryBtn = document.getElementById("partyEntryBtn");
+const cakeConfettiCanvas = document.getElementById("cakeConfettiCanvas");
+const cakeCrumbs = document.getElementById("cakeCrumbs");
+const birthdayText = document.getElementById("birthdayText");
 const textSparkles = document.getElementById("textSparkles");
-const celebrationStars = document.getElementById("celebrationStars");
+const narrationBox = document.getElementById("narrationBox");
+const narrationText = document.getElementById("narrationText");
+const nextSurpriseBtn = document.getElementById("nextSurpriseBtn");
+const stars = document.getElementById("stars");
+const particlesLayer = document.getElementById("particles");
+const fireworksCanvas = document.getElementById("fireworksCanvas");
+const confettiCanvas = document.getElementById("confettiCanvas");
+const introVoice = document.getElementById("introVoice");
+const birthdaySong = document.getElementById("birthdaySong");
+const cutSound = document.getElementById("cutSound");
 
-const introScript = `Hello Astha, main Shivansh...
+const fwCtx = fireworksCanvas?.getContext("2d");
+const cfCtx = confettiCanvas?.getContext("2d");
+const cakeCtx = cakeConfettiCanvas?.getContext("2d");
+
+let played = false;
+let fireworksRunning = false;
+let confettiRunning = false;
+let frameId;
+let confettiFrameId;
+let lastLaunch = 0;
+let rockets = [];
+let sparks = [];
+let confettiPieces = [];
+let sparkleTimer;
+let narrationTimer;
+let lastFireworkFrame = 0;
+let lastConfettiFrame = 0;
+let lastShakeAt = 0;
+let popAudioContext;
+let activeSlideIndex = 0;
+let cakeCutDone = false;
+let isVideoSequenceRunning = false;
+let cakeConfettiFrameId;
+let cakeConfettiPieces = [];
+let slideVideoAutoplayTimer;
+let scrollAutoplayRaf = 0;
+let totalSlides = 0;
+
+const palette = ["#ffd166", "#ff6bb8", "#5da9ff", "#a575ff", "#fff5b7"];
+const narrationScript = `Hello Astha, main Shivansh...
 Aaj ka din bada special hai for you,
 so wishing you a happiest birthday dost.
 Aise hi khush raho, hamesha muskurate raho,
@@ -21,602 +72,713 @@ Aur aaj ka din to bhayankar tarike se jiyo...
 Abhi aage aur bhi bahut kuch hai,
 so wait... aur enter karo.`;
 
-let typingInterval;
-let confettiStarted = false;
-let narrationStarted = false;
-let fallbackInProgress = false;
-let fallbackTimeoutId;
-let celebrationPlayed = false;
+// Performance throttling based on device
+const isMobile = window.innerWidth < 700;
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const hasLowMemory = typeof navigator.deviceMemory === "number" && navigator.deviceMemory <= 4;
+const hasLowCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+const lowPerformanceMode = prefersReducedMotion || (isMobile && (hasLowMemory || hasLowCpu));
+const particleModifier = lowPerformanceMode ? 0.35 : (isMobile ? 0.5 : 1.0);
+const fireworkTargetFps = lowPerformanceMode ? 22 : (isMobile ? 30 : 60);
+const confettiTargetFps = lowPerformanceMode ? 18 : (isMobile ? 28 : 60);
+const fireworkFrameInterval = 1000 / fireworkTargetFps;
+const confettiFrameInterval = 1000 / confettiTargetFps;
+let lastFireworkRender = 0;
+let lastConfettiRender = 0;
+let resizeDebounceTimer;
 
-let fireworksRunning = false;
-let fireworksFrameId;
-let fireworksLastSpawn = 0;
-let activeRockets = [];
-let activeBursts = [];
-let sparkleTimer;
-let fireworksCleanupTimer;
-let overlayHideTimer;
-
-const fireworksPalette = ["#ff4d59", "#ffe066", "#4aa3ff", "#ff77d6", "#a46dff"];
-
-function typeNarrationText(speed = 50) {
-  let index = 0;
-  typedTextEl.textContent = "";
-
-  clearInterval(typingInterval);
-  typingInterval = setInterval(() => {
-    typedTextEl.textContent += introScript[index] ?? "";
-    index += 1;
-
-    if (index >= introScript.length) {
-      clearInterval(typingInterval);
-    }
-  }, speed);
+if (lowPerformanceMode) {
+    document.body.classList.add("reduced-effects");
 }
 
-function getTypingSpeedFromAudio() {
-  if (!Number.isFinite(voiceAudio.duration) || voiceAudio.duration <= 0) {
-    return 52;
-  }
+function sizeCanvases() {
+    if (!fireworksCanvas || !confettiCanvas || !cakeCutWrap) return;
 
-  const calculatedSpeed = Math.round((voiceAudio.duration * 1000) / introScript.length);
-  return Math.min(90, Math.max(28, calculatedSpeed));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    fireworksCanvas.width = Math.floor(w * dpr);
+    fireworksCanvas.height = Math.floor(h * dpr);
+    fireworksCanvas.style.width = `${w}px`;
+    fireworksCanvas.style.height = `${h}px`;
+    fwCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    confettiCanvas.width = Math.floor(w * dpr);
+    confettiCanvas.height = Math.floor(h * dpr);
+    confettiCanvas.style.width = `${w}px`;
+    confettiCanvas.style.height = `${h}px`;
+    cfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const cakeRect = cakeCutWrap.getBoundingClientRect();
+    const cw = Math.max(1, Math.floor(cakeRect.width));
+    const ch = Math.max(1, Math.floor(cakeRect.height));
+    cakeConfettiCanvas.width = Math.floor(cw * dpr);
+    cakeConfettiCanvas.height = Math.floor(ch * dpr);
+    cakeConfettiCanvas.style.width = `${cw}px`;
+    cakeConfettiCanvas.style.height = `${ch}px`;
+    cakeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function getBestHindiVoice() {
-  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  return voices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("hi"));
-}
-
-function waitForVoices() {
-  return new Promise((resolve) => {
-    if (!("speechSynthesis" in window)) {
-      resolve([]);
-      return;
-    }
-
-    const existing = window.speechSynthesis.getVoices();
-    if (existing.length > 0) {
-      resolve(existing);
-      return;
-    }
-
-    const onVoices = () => {
-      window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
-      resolve(window.speechSynthesis.getVoices());
-    };
-
-    window.speechSynthesis.addEventListener("voiceschanged", onVoices, { once: true });
-
-    // Prevent hanging if voiceschanged does not fire.
-    setTimeout(() => {
-      window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
-      resolve(window.speechSynthesis.getVoices());
-    }, 1000);
-  });
-}
-
-async function speakFallbackNarration() {
-  const voices = await waitForVoices();
-
-  return new Promise((resolve, reject) => {
-    if (!("speechSynthesis" in window)) {
-      reject(new Error("speech synthesis not supported"));
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(introScript);
-    utterance.lang = "hi-IN";
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-
-    const bestHindi = voices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("hi"));
-    const bestIndianEnglish = voices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("en-in"));
-    const chosenVoice = bestHindi || bestIndianEnglish || voices[0];
-
-    if (chosenVoice) {
-      utterance.voice = chosenVoice;
-      utterance.lang = chosenVoice.lang;
-    } else {
-      utterance.lang = "en-US";
-    }
-
-    utterance.onend = () => resolve();
-    utterance.onerror = (event) => reject(event.error || new Error("tts failed"));
-
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
-    window.speechSynthesis.speak(utterance);
-  });
-}
-
-function clearFallbackTimeout() {
-  if (fallbackTimeoutId) {
-    clearTimeout(fallbackTimeoutId);
-    fallbackTimeoutId = null;
-  }
-}
-
-async function runFallbackFlow() {
-  if (fallbackInProgress) {
-    return;
-  }
-
-  fallbackInProgress = true;
-  introSection.classList.add("intro-playing");
-  startVoiceBtn.classList.add("hidden");
-  introHint.textContent = "Intro audio missing, fallback voice starting...";
-  typeNarrationText(52);
-
-  clearFallbackTimeout();
-  fallbackTimeoutId = setTimeout(() => {
-    if (fallbackInProgress) {
-      introHint.textContent = "Surprise ready. Tap Enter 🎁";
-      showEnterButton();
-      fallbackInProgress = false;
-    }
-  }, 18000);
-
-  try {
-    await speakFallbackNarration();
-    clearFallbackTimeout();
-    introHint.textContent = "Surprise ready. Tap Enter 🎁";
-    showEnterButton();
-  } catch (ttsError) {
-    clearFallbackTimeout();
-    console.log("Fallback voice failed. Please verify intro audio file in p3 folder.", ttsError);
-    introHint.textContent = "Fallback voice unavailable. Please verify intro audio file.";
-    startVoiceBtn.classList.remove("hidden");
-    narrationStarted = false;
-  } finally {
-    fallbackInProgress = false;
-  }
-}
-
-function showEnterButton() {
-  enterMainBtn.classList.remove("hidden");
-}
-
-function buildCelebrationStars() {
-  if (!celebrationStars || celebrationStars.childElementCount > 0) {
-    return;
-  }
-
-  const isMobile = window.innerWidth < 720;
-  const count = isMobile ? 60 : 100;
-
-  for (let i = 0; i < count; i += 1) {
-    const star = document.createElement("i");
-    star.style.left = `${Math.random() * 100}%`;
-    star.style.top = `${Math.random() * 100}%`;
-    star.style.setProperty("--twinkle", `${2.4 + Math.random() * 2.7}s`);
-    star.style.setProperty("--delay", `${Math.random() * 2.2}s`);
-    celebrationStars.appendChild(star);
-  }
-}
-
-function spawnSparkle() {
-  if (!textSparkles || textSparkles.childElementCount > 40) {
-    return;
-  }
-
-  const sparkle = document.createElement("span");
-  const x = 20 + Math.random() * 60;
-  const y = 8 + Math.random() * 78;
-  const driftX = (Math.random() - 0.5) * 90;
-  const driftY = -20 - Math.random() * 60;
-
-  sparkle.style.left = `${x}%`;
-  sparkle.style.top = `${y}%`;
-  sparkle.style.setProperty("--sparkle-x", `${driftX}px`);
-  sparkle.style.setProperty("--sparkle-y", `${driftY}px`);
-
-  textSparkles.appendChild(sparkle);
-  setTimeout(() => sparkle.remove(), 1000);
-}
-
-function maybePlayFireworkPop() {
-  if (!window.AudioContext && !window.webkitAudioContext) {
-    return;
-  }
-
-  if (Math.random() > 0.38) {
-    return;
-  }
-
-  const AudioContextRef = window.AudioContext || window.webkitAudioContext;
-  const ctx = new AudioContextRef();
-  const now = ctx.currentTime;
-  const oscillator = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  oscillator.type = "triangle";
-  oscillator.frequency.setValueAtTime(170 + Math.random() * 90, now);
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.02, now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-
-  oscillator.connect(gain);
-  gain.connect(ctx.destination);
-  oscillator.start(now);
-  oscillator.stop(now + 0.15);
-  oscillator.onended = () => {
-    ctx.close();
-  };
-}
-
-function resizeFireworksCanvas() {
-  if (!fireworksCanvas) {
-    return;
-  }
-
-  fireworksCanvas.width = window.innerWidth;
-  fireworksCanvas.height = window.innerHeight;
-}
-
-function spawnRocket() {
-  const w = fireworksCanvas.width;
-  const h = fireworksCanvas.height;
-  const originX = w * (0.1 + Math.random() * 0.8);
-  const originY = h + 20;
-  const targetX = w * (0.1 + Math.random() * 0.8);
-  const targetY = h * (0.12 + Math.random() * 0.38);
-
-  activeRockets.push({
-    x: originX,
-    y: originY,
-    targetX,
-    targetY,
-    vx: (targetX - originX) / (35 + Math.random() * 18),
-    vy: -6.3 - Math.random() * 2.4,
-    color: fireworksPalette[Math.floor(Math.random() * fireworksPalette.length)]
-  });
-}
-
-function explodeRocket(rocket) {
-  const burst = [];
-  const count = window.innerWidth < 720 ? 46 : 74;
-
-  for (let i = 0; i < count; i += 1) {
-    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.22;
-    const speed = 1.5 + Math.random() * 3.4;
-    burst.push({
-      x: rocket.x,
-      y: rocket.y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      alpha: 1,
-      friction: 0.985,
-      gravity: 0.048 + Math.random() * 0.03,
-      color: fireworksPalette[Math.floor(Math.random() * fireworksPalette.length)],
-      radius: 1.2 + Math.random() * 2.2
-    });
-  }
-
-  activeBursts.push(...burst);
-  maybePlayFireworkPop();
-}
-
-function drawFireworksFrame(timestamp) {
-  if (!fireworksCanvas || !fireworksRunning) {
-    return;
-  }
-
-  const ctx = fireworksCanvas.getContext("2d");
-  ctx.fillStyle = "rgba(4, 6, 16, 0.25)";
-  ctx.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
-
-  const spawnInterval = window.innerWidth < 720 ? 260 : 180;
-  if (timestamp - fireworksLastSpawn > spawnInterval) {
-    spawnRocket();
-    if (Math.random() > 0.48) {
-      spawnRocket();
-    }
-    fireworksLastSpawn = timestamp;
-  }
-
-  for (let i = activeRockets.length - 1; i >= 0; i -= 1) {
-    const rocket = activeRockets[i];
-    rocket.x += rocket.vx;
-    rocket.y += rocket.vy;
-    rocket.vy += 0.035;
-
-    ctx.beginPath();
-    ctx.arc(rocket.x, rocket.y, 2.4, 0, Math.PI * 2);
-    ctx.fillStyle = rocket.color;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(rocket.x, rocket.y, 8, 0, Math.PI * 2);
-    ctx.fillStyle = `${rocket.color}30`;
-    ctx.fill();
-
-    if (rocket.y <= rocket.targetY || rocket.vy >= 0) {
-      explodeRocket(rocket);
-      activeRockets.splice(i, 1);
-    }
-  }
-
-  for (let i = activeBursts.length - 1; i >= 0; i -= 1) {
-    const spark = activeBursts[i];
-    spark.vx *= spark.friction;
-    spark.vy *= spark.friction;
-    spark.vy += spark.gravity;
-    spark.x += spark.vx;
-    spark.y += spark.vy;
-    spark.alpha -= 0.016;
-
-    if (spark.alpha <= 0) {
-      activeBursts.splice(i, 1);
-      continue;
-    }
-
-    ctx.beginPath();
-    ctx.arc(spark.x, spark.y, spark.radius, 0, Math.PI * 2);
-    ctx.fillStyle = `${spark.color}${Math.round(spark.alpha * 255)
-      .toString(16)
-      .padStart(2, "0")}`;
-    ctx.fill();
-  }
-
-  fireworksFrameId = requestAnimationFrame(drawFireworksFrame);
-}
-
-function stopFireworks() {
-  fireworksRunning = false;
-  cancelAnimationFrame(fireworksFrameId);
-  activeRockets = [];
-  activeBursts = [];
-
-  if (fireworksCanvas) {
-    const ctx = fireworksCanvas.getContext("2d");
-    ctx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
-  }
-}
-
-function runGrandCelebration() {
-  if (!celebrationOverlay || celebrationPlayed) {
-    return;
-  }
-
-  celebrationPlayed = true;
-  buildCelebrationStars();
-  resizeFireworksCanvas();
-
-  celebrationOverlay.classList.remove("hidden");
-  requestAnimationFrame(() => {
-    celebrationOverlay.classList.add("is-active");
-  });
-
-  clearTimeout(fireworksCleanupTimer);
-  clearTimeout(overlayHideTimer);
-  clearInterval(sparkleTimer);
-
-  birthdayBanner.classList.remove("show");
-  textSparkles.innerHTML = "";
-
-  // Step 3: start fireworks after 0.5s.
-  setTimeout(() => {
-    fireworksRunning = true;
-    fireworksLastSpawn = 0;
-    fireworksFrameId = requestAnimationFrame(drawFireworksFrame);
-  }, 500);
-
-  // Step 4: reveal central birthday line after 1.5s.
-  setTimeout(() => {
-    birthdayBanner.classList.add("show");
-    sparkleTimer = setInterval(spawnSparkle, 120);
-  }, 1500);
-
-  // Step 5: continue for a few seconds, then fade everything out smoothly.
-  fireworksCleanupTimer = setTimeout(() => {
-    stopFireworks();
-  }, 7800);
-
-  overlayHideTimer = setTimeout(() => {
-    clearInterval(sparkleTimer);
-    birthdayBanner.classList.remove("show");
-    celebrationOverlay.classList.remove("is-active");
-
-    setTimeout(() => {
-      celebrationOverlay.classList.add("hidden");
-    }, 700);
-  }, 8800);
-}
-
-function beginExperience() {
-  mainContent.classList.remove("hidden");
-  introSection.classList.add("hidden");
-  runGrandCelebration();
-
-  if (bgMusic) {
-    bgMusic.volume = 0.2;
-    bgMusic.play().catch(() => {
-      // Safe ignore if background music is blocked.
-    });
-  }
-
-  document.getElementById("landing").scrollIntoView({ behavior: "smooth" });
-}
-
-function setupSmoothButtons() {
-  const buttons = document.querySelectorAll("[data-scroll]");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = document.querySelector(btn.dataset.scroll);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth" });
-      }
-    });
-  });
-}
-
-function setupRevealOnScroll() {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-        }
-      });
-    },
-    { threshold: 0.18 }
-  );
-
-  document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
-}
-
-function setupQuiz() {
-  const form = document.getElementById("quizForm");
-  const result = document.getElementById("quizResult");
-
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const data = new FormData(form);
-    const selected = ["q1", "q2", "q3"].map((q) => data.get(q));
-
-    if (selected.some((v) => v === null)) {
-      result.textContent = "Arre! Har question ka answer do pehle 😄";
-      return;
-    }
-
-    const score = selected.reduce((sum, val) => sum + Number(val), 0);
-
-    if (score === 3) {
-      result.textContent = "Legend alert! Tu mujhe bahut zyada samajhta/samajhti hai 😂✨";
-    } else if (score === 2) {
-      result.textContent = "Solid score! Tu close friend zone ka CEO hai 😎";
-    } else {
-      result.textContent = "Hmm... lagta hai ek aur memory session karna padega 😄";
-    }
-  });
-}
-
-function setupConfetti() {
-  const canvas = document.getElementById("confettiCanvas");
-  const ctx = canvas.getContext("2d");
-  const confettiPieces = [];
-  let animationFrame;
-
-  const colors = ["#44f0ff", "#ff5fae", "#ffd166", "#7cf29a", "#ffffff"];
-
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-
-  function createBurst() {
-    const count = 220;
+function buildStars() {
+    if (!stars) return;
+    const count = lowPerformanceMode ? 30 : (isMobile ? 50 : 100);
+    stars.innerHTML = '';
     for (let i = 0; i < count; i += 1) {
-      confettiPieces.push({
-        x: Math.random() * canvas.width,
-        y: -20 - Math.random() * canvas.height * 0.3,
-        r: 2 + Math.random() * 5,
-        d: Math.random() * count,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        tilt: Math.random() * 10 - 10,
-        tiltAngle: 0,
-        tiltAngleIncrement: 0.03 + Math.random() * 0.08,
-        velocity: 1 + Math.random() * 3
-      });
+        const star = document.createElement("i");
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.setProperty("--dur", `${2.2 + Math.random() * 2.6}s`);
+        star.style.setProperty("--delay", `${Math.random() * 2.4}s`);
+        stars.appendChild(star);
     }
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    confettiPieces.forEach((p) => {
-      p.tiltAngle += p.tiltAngleIncrement;
-      p.y += p.velocity;
-      p.tilt = Math.sin(p.tiltAngle) * 12;
-
-      ctx.beginPath();
-      ctx.lineWidth = p.r;
-      ctx.strokeStyle = p.color;
-      ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
-      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
-      ctx.stroke();
-    });
-
-    for (let i = confettiPieces.length - 1; i >= 0; i -= 1) {
-      if (confettiPieces[i].y > canvas.height + 30) {
-        confettiPieces.splice(i, 1);
-      }
-    }
-
-    if (confettiPieces.length > 0) {
-      animationFrame = requestAnimationFrame(draw);
-    } else {
-      cancelAnimationFrame(animationFrame);
-    }
-  }
-
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-
-  const finalSection = document.getElementById("final");
-  const finalObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !confettiStarted) {
-          confettiStarted = true;
-          createBurst();
-          draw();
-        }
-      });
-    },
-    { threshold: 0.45 }
-  );
-
-  finalObserver.observe(finalSection);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  enterMainBtn.classList.add("hidden");
-  typedTextEl.textContent = "";
+function buildFloatingParticles() {
+    if (!particlesLayer) return;
+    const count = lowPerformanceMode ? 10 : (isMobile ? 15 : 30);
+    particlesLayer.innerHTML = '';
+    for (let i = 0; i < count; i += 1) {
+        const orb = document.createElement("i");
+        orb.style.left = `${Math.random() * 100}%`;
+        orb.style.bottom = `${-10 - Math.random() * 35}%`;
+        orb.style.setProperty("--float-dur", `${6 + Math.random() * 4}s`);
+        orb.style.setProperty("--float-delay", `${Math.random() * 5}s`);
+        particlesLayer.appendChild(orb);
+    }
+}
 
-  window.addEventListener("resize", resizeFireworksCanvas);
+function launchRocket() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const fromX = w * (0.12 + Math.random() * 0.76);
+    const targetX = w * (0.1 + Math.random() * 0.8);
+    const targetY = h * (0.16 + Math.random() * 0.42);
+    const trail = [];
 
-  setupSmoothButtons();
-  setupRevealOnScroll();
-  setupQuiz();
-  setupConfetti();
+    rockets.push({
+        x: fromX,
+        y: h + 15,
+        vx: (targetX - fromX) / (30 + Math.random() * 20),
+        vy: -6.1 - Math.random() * 2.5,
+        targetY,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        trail
+    });
+}
+
+function addExplosion(x, y) {
+    const burstCount = Math.floor((isMobile ? 30 : 60) * particleModifier);
+    for (let i = 0; i < burstCount; i += 1) {
+        const angle = (Math.PI * 2 * i) / burstCount + (Math.random() - 0.5) * 0.25;
+        const speed = 1.2 + Math.random() * 3.7;
+
+        sparks.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            drag: 0.985,
+            gravity: 0.045 + Math.random() * 0.03,
+            alpha: 1,
+            radius: 1.2 + Math.random() * 2.1,
+            color: palette[Math.floor(Math.random() * palette.length)]
+        });
+    }
+
+    const now = performance.now();
+    if (now - lastShakeAt > 260) {
+        lastShakeAt = now;
+        celebration.classList.add("screen-shake");
+        setTimeout(() => celebration.classList.remove("screen-shake"), 220);
+    }
+    playSoftPop();
+}
+
+function drawRocketTrail(rocket) {
+    rocket.trail.push({ x: rocket.x, y: rocket.y });
+    if (rocket.trail.length > 8) {
+        rocket.trail.shift();
+    }
+
+    for (let i = 0; i < rocket.trail.length; i += 1) {
+        const point = rocket.trail[i];
+        const alpha = i / rocket.trail.length;
+        fwCtx.beginPath();
+        fwCtx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+        fwCtx.fillStyle = `${rocket.color}${Math.floor(alpha * 255).toString(16).padStart(2, "0")}`;
+        fwCtx.fill();
+    }
+}
+
+function animateFireworks(now) {
+    if (!fireworksRunning) return;
+
+    if (!lastFireworkRender) lastFireworkRender = now;
+    const elapsed = now - lastFireworkRender;
+    if (elapsed < fireworkFrameInterval) {
+        frameId = requestAnimationFrame(animateFireworks);
+        return;
+    }
+
+    const delta = Math.min(2.1, Math.max(0.7, elapsed / 16.67 || 1));
+    lastFireworkFrame = now;
+    lastFireworkRender = now;
+
+    fwCtx.fillStyle = "rgba(3, 4, 14, 0.15)";
+    fwCtx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+    const interval = isMobile ? 400 : 250;
+    if (now - lastLaunch > interval) {
+        launchRocket();
+        if (Math.random() > 0.75) launchRocket();
+        lastLaunch = now;
+    }
+
+    for (let i = rockets.length - 1; i >= 0; i -= 1) {
+        const rocket = rockets[i];
+        rocket.x += rocket.vx * delta;
+        rocket.y += rocket.vy * delta;
+        rocket.vy += 0.035 * delta;
+
+        drawRocketTrail(rocket);
+
+        fwCtx.beginPath();
+        fwCtx.arc(rocket.x, rocket.y, 2.6, 0, Math.PI * 2);
+        fwCtx.fillStyle = rocket.color;
+        fwCtx.fill();
+
+        if (rocket.y <= rocket.targetY || rocket.vy >= 0.2) {
+            addExplosion(rocket.x, rocket.y);
+            rockets.splice(i, 1);
+        }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i -= 1) {
+        const p = sparks[i];
+        p.vx *= Math.pow(p.drag, delta);
+        p.vy *= Math.pow(p.drag, delta);
+        p.vy += p.gravity * delta;
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.alpha -= 0.015 * delta;
+
+        if (p.alpha <= 0) {
+            sparks.splice(i, 1);
+            continue;
+        }
+
+        fwCtx.beginPath();
+        fwCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        const hexAlpha = Math.max(0, Math.floor(p.alpha * 255)).toString(16).padStart(2, "0");
+        fwCtx.fillStyle = `${p.color}${hexAlpha}`;
+        fwCtx.fill();
+    }
+
+    frameId = requestAnimationFrame(animateFireworks);
+}
+
+function seedConfetti() {
+    const count = isMobile ? 60 : 120;
+    confettiPieces = [];
+    for (let i = 0; i < count; i += 1) {
+        confettiPieces.push({
+            x: Math.random() * window.innerWidth,
+            y: -Math.random() * window.innerHeight,
+            size: 4 + Math.random() * 8,
+            vy: 0.8 + Math.random() * 1.8,
+            vx: (Math.random() - 0.5) * 0.8,
+            tilt: Math.random() * Math.PI * 2,
+            spin: 0.03 + Math.random() * 0.06,
+            color: palette[Math.floor(Math.random() * palette.length)]
+        });
+    }
+}
+
+function animateConfetti(now) {
+    if (!confettiRunning) return;
+
+    if (!lastConfettiRender) lastConfettiRender = now;
+    const elapsed = now - lastConfettiRender;
+    if (elapsed < confettiFrameInterval) {
+        confettiFrameId = requestAnimationFrame(animateConfetti);
+        return;
+    }
+
+    const delta = Math.min(2, Math.max(0.7, elapsed / 16.67 || 1));
+    lastConfettiFrame = now;
+    lastConfettiRender = now;
+
+    cfCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    for (const c of confettiPieces) {
+        c.x += c.vx * delta;
+        c.y += c.vy * delta;
+        c.tilt += c.spin * delta;
+
+        if (c.y > window.innerHeight + 14) {
+            c.y = -20;
+            c.x = Math.random() * window.innerWidth;
+        }
+
+        cfCtx.save();
+        cfCtx.translate(c.x, c.y);
+        cfCtx.rotate(c.tilt);
+        cfCtx.fillStyle = c.color;
+        cfCtx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.58);
+        cfCtx.restore();
+    }
+
+    confettiFrameId = requestAnimationFrame(animateConfetti);
+}
+
+function spawnTextSparkle() {
+    if (!textSparkles || textSparkles.childElementCount > 30) return;
+
+    const sparkle = document.createElement("span");
+    sparkle.style.left = `${Math.random() * 100}%`;
+    sparkle.style.top = `${8 + Math.random() * 80}%`;
+    sparkle.style.setProperty("--sx", `${(Math.random() - 0.5) * 90}px`);
+    sparkle.style.setProperty("--sy", `${-18 - Math.random() * 75}px`);
+    textSparkles.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 900);
+}
+
+function typeNarration(speed) {
+    if (!narrationText || !narrationBox) return 0;
+    clearInterval(narrationTimer);
+    narrationText.textContent = "";
+    narrationBox.classList.add("show");
+
+    let idx = 0;
+    narrationTimer = setInterval(() => {
+        narrationText.textContent += narrationScript[idx] || "";
+        idx += 1;
+        if (idx >= narrationScript.length) clearInterval(narrationTimer);
+    }, speed);
+
+    return narrationScript.length * speed;
+}
+
+function speechFallback() {
+    if (!("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(narrationScript);
+    u.lang = "hi-IN";
+    u.rate = 0.95;
+    u.pitch = 1;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+}
+
+async function startNarration() {
+    let speed = 46;
+    if (Number.isFinite(introVoice?.duration) && introVoice.duration > 0) {
+        speed = Math.max(28, Math.min(85, Math.round((introVoice.duration * 1000) / narrationScript.length)));
+    }
+
+    const estimatedMs = typeNarration(speed);
+    try {
+        if (introVoice) {
+            introVoice.currentTime = 0;
+            introVoice.volume = 1;
+            await introVoice.play();
+        }
+    } catch (error) {
+        speechFallback();
+    }
+
+    return Math.max(estimatedMs + 1600, 7800);
+}
+
+function playSoftPop() {
+    if (!window.AudioContext && !window.webkitAudioContext) return;
+    if (Math.random() > 0.35) return;
+
+    const AudioRef = window.AudioContext || window.webkitAudioContext;
+    if (!popAudioContext) popAudioContext = new AudioRef();
+    if (popAudioContext.state === 'suspended') popAudioContext.resume();
+
+    const osc = popAudioContext.createOscillator();
+    const gain = popAudioContext.createGain();
+    const now = popAudioContext.currentTime;
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(160 + Math.random() * 120, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.02, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+
+    osc.connect(gain);
+    gain.connect(popAudioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+}
+
+function stopBirthdaySong() {
+    if (!birthdaySong) return;
+    birthdaySong.pause();
+    birthdaySong.currentTime = 0;
+}
+
+async function playBirthdaySong() {
+    if (!birthdaySong) return;
+    birthdaySong.currentTime = 0;
+    birthdaySong.volume = 0.6;
+    try {
+        await birthdaySong.play();
+    } catch (e) {}
+}
+
+function stopCelebration() {
+    fireworksRunning = false;
+    confettiRunning = false;
+    cancelAnimationFrame(frameId);
+    cancelAnimationFrame(confettiFrameId);
+    clearInterval(sparkleTimer);
+    clearInterval(narrationTimer);
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (introVoice) introVoice.pause();
+    stopBirthdaySong();
+    
+    if (narrationBox) narrationBox.classList.remove("show");
+    if (nextSurpriseBtn) nextSurpriseBtn.classList.add("hidden");
+    if (narrationText) narrationText.textContent = "";
+    
+    rockets = [];
+    sparks = [];
+
+    setTimeout(() => {
+        if (celebration) {
+            celebration.classList.remove("active");
+            setTimeout(() => celebration.classList.add("hidden"), 700);
+        }
+    }, 200);
+}
+
+// LAZY LOADING HANDLER
+function loadVideo(video) {
+    const source = video.querySelector('source');
+    if (source && source.dataset.src) {
+        source.src = source.dataset.src;
+        delete source.dataset.src;
+        video.load();
+    }
+}
+
+function setMainSlide(index) {
+    if (!totalSlides) return;
+    activeSlideIndex = Math.max(0, Math.min(totalSlides - 1, index));
+    if (slidesTrack) slidesTrack.style.transform = `translateX(-${activeSlideIndex * 100}%)`;
+
+    surpriseVideos.forEach((video) => {
+        video.pause();
+    });
+
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
+
+    updateSlideControls();
+
+    clearTimeout(slideVideoAutoplayTimer);
+    slideVideoAutoplayTimer = setTimeout(() => {
+        autoplayVisibleVideoInActiveSlide();
+    }, 600);
+}
+
+function updateSlideControls() {
+    if (prevSlideBtn) prevSlideBtn.disabled = activeSlideIndex === 0;
+    if (nextSlideBtn) nextSlideBtn.disabled = activeSlideIndex >= totalSlides - 1;
+
+    if (!slideDotsWrap) return;
+    const dots = slideDotsWrap.querySelectorAll("button[data-slide-index]");
+    dots.forEach((dot) => {
+        const isActive = Number(dot.dataset.slideIndex) === activeSlideIndex;
+        dot.classList.toggle("active", isActive);
+        dot.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+}
+
+function setupSlideDots() {
+    if (!slidesTrack || !slideDotsWrap) return;
+    slideDotsWrap.innerHTML = "";
+
+    for (let i = 0; i < totalSlides; i += 1) {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "slide-dot";
+        dot.dataset.slideIndex = String(i);
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.setAttribute("aria-selected", "false");
+        slideDotsWrap.appendChild(dot);
+    }
+}
+
+async function playWithFallback(video) {
+    if (!video) return;
+    loadVideo(video); // Ensure loaded
+    try {
+        await video.play();
+    } catch (error) {
+        video.muted = true;
+        await video.play().catch(() => {});
+    }
+}
+
+async function autoplayVisibleVideoInActiveSlide() {
+    if (mainContent?.classList.contains("hidden") || !slidesTrack) return;
+
+    const activeSlide = slidesTrack.children[activeSlideIndex];
+    if (!activeSlide) return;
+
+    const slideVideos = Array.from(activeSlide.querySelectorAll("video"));
+    if (!slideVideos.length) return;
+
+    let targetVideo = slideVideos[0];
+    let bestRatio = 0;
+
+    for (const video of slideVideos) {
+        const rect = video.getBoundingClientRect();
+        const visibleHeight = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+        const ratio = visibleHeight / (rect.height || 1);
+        if (ratio > bestRatio) {
+            bestRatio = ratio;
+            targetVideo = video;
+        }
+    }
+
+    surpriseVideos.forEach((video) => {
+        if (video !== targetVideo) video.pause();
+    });
+
+    if (targetVideo.paused) targetVideo.currentTime = 0;
+    await playWithFallback(targetVideo);
+}
+
+function setupHoverPlayForVideos() {
+    const supportsHover = window.matchMedia("(hover: hover)").matches;
+    if (!supportsHover || !surpriseVideos.length) return;
+
+    surpriseVideos.forEach((video) => {
+        video.addEventListener("mouseenter", async () => {
+            surpriseVideos.forEach(v => v !== video && v.pause());
+            await playWithFallback(video);
+        });
+        video.addEventListener("mouseleave", () => video.pause());
+    });
+}
+
+function setupLazyVideoObserver() {
+    if (!surpriseVideos.length || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const video = entry.target;
+            loadVideo(video);
+            observer.unobserve(video);
+        });
+    }, {
+        root: null,
+        rootMargin: "260px 0px",
+        threshold: 0.01
+    });
+
+    surpriseVideos.forEach((video) => observer.observe(video));
+}
+
+function seedCakeConfetti() {
+    if (!cakeCutWrap) return;
+    const w = cakeCutWrap.clientWidth;
+    const h = cakeCutWrap.clientHeight;
+    const count = isMobile ? 50 : 100;
+    cakeConfettiPieces = [];
+
+    for (let i = 0; i < count; i += 1) {
+        cakeConfettiPieces.push({
+            x: Math.random() * w,
+            y: -Math.random() * h,
+            vx: (Math.random() - 0.5) * 1.6,
+            vy: 1 + Math.random() * 2.4,
+            size: 4 + Math.random() * 8,
+            tilt: Math.random() * Math.PI * 2,
+            spin: 0.03 + Math.random() * 0.08,
+            life: 200 + Math.random() * 100,
+            color: palette[Math.floor(Math.random() * palette.length)]
+        });
+    }
+}
+
+function animateCakeConfetti() {
+    if (!cakeCtx || !cakeCutWrap) return;
+    const w = cakeCutWrap.clientWidth;
+    const h = cakeCutWrap.clientHeight;
+    cakeCtx.clearRect(0, 0, w, h);
+
+    let alive = 0;
+    for (const p of cakeConfettiPieces) {
+        if (p.life <= 0) continue;
+        p.x += p.vx; p.y += p.vy; p.tilt += p.spin; p.life -= 1;
+        if (p.y > h + 22) { p.life = 0; continue; }
+        alive += 1;
+        cakeCtx.save();
+        cakeCtx.translate(p.x, p.y);
+        cakeCtx.rotate(p.tilt);
+        cakeCtx.fillStyle = p.color;
+        cakeCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.58);
+        cakeCtx.restore();
+    }
+
+    if (alive > 0) cakeConfettiFrameId = requestAnimationFrame(animateCakeConfetti);
+}
+
+function cutCakeNow() {
+    if (cakeCutDone) return;
+    cakeCutDone = true;
+    cakeCutWrap?.classList.add("punch");
+    setTimeout(() => cakeCutWrap?.classList.remove("punch"), 360);
+
+    if (navigator.vibrate) navigator.vibrate([15, 15, 20]);
+    
+    if (cutSound) {
+        cutSound.currentTime = 0;
+        cutSound.volume = 0.8;
+        cutSound.play().catch(() => {});
+    }
+    playBirthdaySong();
+
+    setTimeout(() => cakeCutWrap?.classList.add("cut"), 180);
+
+    setTimeout(() => {
+        if (cakeHint) cakeHint.textContent = "Perfect cut!";
+        cakeMessage?.classList.add("show");
+        recutCakeBtn?.classList.remove("hidden");
+        cakeStage?.classList.add("shake");
+        setTimeout(() => cakeStage?.classList.remove("shake"), 320);
+        seedCakeConfetti();
+        animateCakeConfetti();
+    }, 1200);
+}
+
+function resetCakeCut() {
+    cakeCutDone = false;
+    cakeCutWrap?.classList.remove("cut", "punch");
+    cakeMessage?.classList.remove("show");
+    recutCakeBtn?.classList.add("hidden");
+    if (cakeHint) cakeHint.textContent = "Please tap on cake and cut the cake";
+    if (cutSound) cutSound.pause();
+    stopBirthdaySong();
+    cancelAnimationFrame(cakeConfettiFrameId);
+    if (cakeCrumbs) cakeCrumbs.innerHTML = "";
+}
+
+function runCinematicSequence() {
+    if (played) return;
+    played = true;
+
+    intro?.classList.add("fade-out");
+    setTimeout(() => intro?.classList.add("hidden"), 300);
+
+    if (celebration) {
+        celebration.classList.remove("hidden");
+        requestAnimationFrame(() => celebration.classList.add("active"));
+    }
+
+    setTimeout(() => {
+        fireworksRunning = true; confettiRunning = true;
+        seedConfetti();
+        lastFireworkFrame = performance.now();
+        lastConfettiFrame = performance.now();
+        lastFireworkRender = 0;
+        lastConfettiRender = 0;
+        frameId = requestAnimationFrame(animateFireworks);
+        confettiFrameId = requestAnimationFrame(animateConfetti);
+    }, 500);
+
+    setTimeout(() => {
+        birthdayText?.classList.add("show");
+        sparkleTimer = setInterval(spawnTextSparkle, 150);
+    }, 1500);
+
+    setTimeout(async () => {
+        const totalNarrationMs = await startNarration();
+        setTimeout(() => nextSurpriseBtn?.classList.remove("hidden"), totalNarrationMs);
+    }, 900);
+}
+
+function enterFirstSmileSurprise() {
+    if (nextSurpriseBtn) nextSurpriseBtn.classList.add("hidden");
+    stopCelebration();
+    setTimeout(() => {
+        resetCakeCut();
+        setMainSlide(2);
+        mainContent?.classList.remove("hidden");
+    }, 460);
+}
+
+// INIT
+sizeCanvases();
+buildStars();
+buildFloatingParticles();
+setupHoverPlayForVideos();
+setupLazyVideoObserver();
+totalSlides = slidesTrack ? slidesTrack.children.length : 0;
+setupSlideDots();
+updateSlideControls();
+
+window.addEventListener("resize", () => {
+    clearTimeout(resizeDebounceTimer);
+    resizeDebounceTimer = setTimeout(() => {
+        sizeCanvases();
+        buildStars();
+        buildFloatingParticles();
+    }, 140);
+}, { passive: true });
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        surpriseVideos.forEach((video) => video.pause());
+    }
 });
 
-startVoiceBtn.addEventListener("click", async () => {
-  if (narrationStarted) {
-    return;
-  }
-  narrationStarted = true;
+window.addEventListener("scroll", () => {
+    if (![1, 3, 4].includes(activeSlideIndex)) return;
+    if (scrollAutoplayRaf) return;
+    scrollAutoplayRaf = requestAnimationFrame(async () => {
+        scrollAutoplayRaf = 0;
+        await autoplayVisibleVideoInActiveSlide();
+    });
+}, { passive: true });
 
-  voiceAudio.currentTime = 0;
-  voiceAudio.volume = 1;
-
-  try {
-    await voiceAudio.play();
-
-    introSection.classList.add("intro-playing");
-    startVoiceBtn.classList.add("hidden");
-    introHint.textContent = "Playing your surprise...";
-
-    const typingSpeed = getTypingSpeedFromAudio();
-    typeNarrationText(typingSpeed);
-  } catch (error) {
-    console.log("Audio failed to play. Check intro audio path in p3 folder.", error);
-    await runFallbackFlow();
-  }
+slidesTrack?.addEventListener("transitionend", () => autoplayVisibleVideoInActiveSlide());
+enterBtn?.addEventListener("click", runCinematicSequence);
+nextSurpriseBtn?.addEventListener("click", enterFirstSmileSurprise);
+openVideoSlideBtn?.addEventListener("click", () => setMainSlide(1));
+openCakeSlideBtn?.addEventListener("click", () => {
+    setMainSlide(3);
+    if (astha2Video) playWithFallback(astha2Video);
+});
+openAstha12Btn?.addEventListener("click", () => setMainSlide(4));
+prevSlideBtn?.addEventListener("click", () => setMainSlide(activeSlideIndex - 1));
+nextSlideBtn?.addEventListener("click", () => setMainSlide(activeSlideIndex + 1));
+slideDotsWrap?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLButtonElement)) return;
+    const index = Number(target.dataset.slideIndex);
+    if (!Number.isFinite(index)) return;
+    setMainSlide(index);
+});
+cakeCutWrap?.addEventListener("click", cutCakeNow);
+cakeCutWrap?.addEventListener("touchstart", cutCakeNow, { passive: true });
+recutCakeBtn?.addEventListener("click", resetCakeCut);
+partyEntryBtn?.addEventListener("click", () => {
+    stopBirthdaySong();
+    setMainSlide(1);
+    if (surpriseVideos[0]) playWithFallback(surpriseVideos[0]);
 });
 
-voiceAudio.onended = function onVoiceEnded() {
-  introHint.textContent = "Surprise ready. Tap Enter 🎁";
-  showEnterButton();
-};
+// INITIAL PRELOAD FOR FIRST VIDEO
+if (surpriseVideos[0]) loadVideo(surpriseVideos[0]);
 
-voiceAudio.onerror = function onVoiceError(error) {
-  console.log("Audio error event. Check intro audio file in same folder.", error);
-  clearInterval(typingInterval);
-  runFallbackFlow();
-};
-
-enterMainBtn.addEventListener("click", beginExperience);
+document.addEventListener("keydown", (event) => {
+    if (mainContent?.classList.contains("hidden")) return;
+    if (event.key === "ArrowLeft") setMainSlide(activeSlideIndex - 1);
+    if (event.key === "ArrowRight") setMainSlide(activeSlideIndex + 1);
+});
